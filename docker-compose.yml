@@ -1,0 +1,50 @@
+version: "2.2"
+services:
+  traefik:
+    image: traefik:latest
+    container_name: traefik
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    networks:
+      - iltpwc
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./data-traefik/traefik.yml:/traefik.yml:ro
+      - ./data-traefik/acme.json:/acme.json
+      - ./data-traefik/configurations:/configurations
+    environment:
+      - DO_AUTH_TOKEN=<ADD_YOUR_TOKEN>
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=iltpwc"
+      - "traefik.http.routers.traefik-secure.entrypoints=websecure"
+      - "traefik.http.routers.traefik-secure.rule=Host(`<ADD_YOUR_URL>`)"
+      - "traefik.http.routers.traefik-secure.service=api@internal"
+      - "traefik.http.routers.traefik-secure.middlewares=user-auth@file"
+
+  httpd:
+    image: httpd
+    container_name: httpd
+    restart: unless-stopped
+    networks:
+      - iltpwc
+    security_opt:
+      - no-new-privileges:true
+    volumes:
+      - ./data-httpd/:/usr/local/apache2/htdocs/
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=iltpwc"
+      - "traefik.http.routers.httpd.entrypoints=websecure"
+      - "traefik.http.routers.httpd.rule=Host(`<ADD_YOUR_URL>`)" 
+      - "traefik.http.routers.httpd.service=httpd"
+      - "traefik.http.services.httpd.loadbalancer.server.port=80"        
+
+networks:
+  iltpwc:
+    external: true
