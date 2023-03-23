@@ -1,4 +1,17 @@
 http:
+  routers:
+    static-route:
+      entryPoints:
+      - websecure
+      rule: Host("<ADD_YOUR_DOMAIN>")
+      service: static
+
+  services:
+    static:
+      loadBalancer:
+        servers:
+        - url: "<ADD_LOCAL_IP_AND_PORT>"
+
   middlewares:
     secureHeaders:
       headers:
